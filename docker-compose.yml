@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  admes_application:
+    restart: unless-stopped
+    build: .
+    command: yarn start
+    networks:
+      - app_network
+
+  nginx:
+    restart: unless-stopped
+    build: ./.nginx
+    container_name: admes_frontend
+    depends_on:
+      - admes_application
+    networks:
+      - app_network
+      - server
+
+networks:
+  app_network:
+    driver: bridge
+  server:
+    external: true
