@@ -28,7 +28,7 @@ export default Vue.extend({
 
   computed: {
     validation(): boolean {
-      return this.channel && this.channelRule(this.channel) === true
+      return !!this.channel && this.channelRule(this.channel) === true
     },
   },
 

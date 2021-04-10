@@ -76,7 +76,7 @@ export default Vue.extend({
   }),
 
   watch: {
-    alerts(val) {
+    alerts(val: AlertType[]) {
       if (val.some((el) => !el.snackbar))
         this.alerts = this.alerts.filter((el) => el.snackbar)
     },
@@ -117,7 +117,10 @@ export default Vue.extend({
     sendMessage() {
       if (!this.message) return
       this.ws?.send(
-        new Message({ content: this.message.trim(), userId: this.userId })
+        new Message({
+          content: this.message.trim(),
+          userId: this.userId,
+        }).toString()
       )
       this.message = ''
     },
