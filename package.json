@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "cross-env WEBSOCKET_URL=ws://localhost:7777 nuxt",
+    "dev:broadcast": "cross-env WEBSOCKET_URL=wss://api-admes.admire.social nuxt",
     "build": "cross-env WEBSOCKET_URL=wss://api-admes.admire.social nuxt build",
     "start": "cross-env WEBSOCKET_URL=wss://api-admes.admire.social nuxt start",
     "generate": "nuxt generate",

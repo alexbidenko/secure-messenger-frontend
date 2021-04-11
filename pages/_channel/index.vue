@@ -16,8 +16,18 @@
                 :border="m.body.user.id === userId ? 'right' : 'left'"
                 :color="m.body.user.id === userId ? 'indigo' : 'blue'"
                 dark
-                >{{ m.body.content.message
-                }}<template v-if="m.body.user.id !== userId"
+                style="width: fit-content"
+                :style="{ marginLeft: m.body.user.id === userId && `auto` }"
+                ><template v-if="'message' in m.body.content">{{
+                  m.body.content.message
+                }}</template>
+                <audio
+                  v-else-if="'audio' in m.body.content"
+                  :src="m.body.content.audio"
+                  controls
+                  class="d-block"
+                  style="outline: none"
+                /><template v-if="m.body.user.id !== userId"
                   ><v-divider class="mt-3"></v-divider
                   ><span class="caption"
                     >From: {{ m.body.user.name }}</span
@@ -35,14 +45,29 @@
         <v-form @submit.prevent="sendMessage">
           <v-layout>
             <v-textarea
+              ref="input"
               v-model="message"
               rows="5"
               no-resize
               @keydown.ctrl.enter="sendMessage"
             />
-            <v-btn :disabled="!message" type="submit" icon>
-              <v-icon> mdi-send </v-icon>
-            </v-btn>
+            <div>
+              <div v-if="!voice && message">
+                <v-btn :disabled="!message" type="submit" icon large>
+                  <v-icon> mdi-send </v-icon>
+                </v-btn>
+              </div>
+              <v-btn-toggle v-if="!message" v-model="voice" group rounded dense>
+                <v-btn
+                  icon
+                  class="mt-2 channelPage__voice"
+                  large
+                  :disabled="!voiceAvailable"
+                >
+                  <v-icon> mdi-microphone </v-icon>
+                </v-btn>
+              </v-btn-toggle>
+            </div>
           </v-layout>
         </v-form>
       </v-card-text>
@@ -79,6 +104,12 @@
   &__input {
     position: sticky;
     bottom: 36px;
+  }
+
+  & &__voice {
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 0;
   }
 }
 </style>
