@@ -49,6 +49,10 @@
           </v-list-item-action>
           <v-list-item-title>Switch drawer (click me)</v-list-item-title>
         </v-list-item>
+
+        <v-list-item v-for="user in users" :key="user.id">
+          <v-list-item-title>{{ user.name }}</v-list-item-title>
+        </v-list-item>
       </v-list>
     </v-navigation-drawer>
     <v-footer :absolute="!fixed" app>
@@ -78,6 +82,12 @@ export default Vue.extend({
       rightDrawer: false,
       title: 'Admire Message',
     }
+  },
+
+  computed: {
+    users() {
+      return this.$store.state.UsersModule.users
+    },
   },
 })
 </script>
