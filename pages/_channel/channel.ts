@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Frame, { Message, MessageTypes } from '~/types/message'
 import { clear, record, stop } from '~/types/recorder'
 import readAudioFromFrame from '~/scripts/readAudioFromFrame'
+import rtc from '~/scripts/rtc'
 
 type AlertType = {
   id: number
@@ -24,6 +25,14 @@ export default Vue.extend({
     // @ts-ignore
     recorder: null as any,
     data: [] as Blob[],
+    callDialog: false,
+    devises: {
+      audioInput: [] as MediaDeviceInfo[],
+      videoInput: [] as MediaDeviceInfo[],
+    },
+    videoInput: null as null | string,
+    peerConnection: null as null | RTCPeerConnection,
+    connected: false,
   }),
 
   computed: {
@@ -75,11 +84,37 @@ export default Vue.extend({
         stop()
       }
     },
+    callDialog(val: boolean) {
+      if (val) {
+        this.$nextTick(() => {
+          rtc(this.ws!, (this.$refs.video as HTMLVideoElement[])[0], {
+            deviseId: this.videoInput,
+            userId: this.userId,
+          }).then((peer) => {
+            this.peerConnection = peer
+            this.peerConnection.ontrack = ({ streams: [stream] }) => {
+              console.log(stream)
+              ;(this.$refs.video as HTMLVideoElement[])[1].srcObject = stream
+            }
+          })
+        })
+      } else (this.$refs.video as HTMLVideoElement[])[0].srcObject = null
+    },
+    videoInput() {
+      // localStorage.setItem('video_input', val)
+      // rtc(this.ws!, (this.$refs.video as HTMLVideoElement[])[0], {
+      //   deviseId: val,
+      //   userId: this.userId,
+      // }).then((peer) => (this.peerConnection = peer))
+    },
   },
 
   mounted() {
-    this.name = prompt('Введите ваше имя:') || ''
+    this.videoInput = localStorage.getItem('video_input')
+    this.name =
+      localStorage.getItem('user_name') || prompt('Введите ваше имя:') || ''
     if (!this.name) this.$router.push('/')
+    localStorage.setItem('user_name', this.name)
 
     this.ws = new WebSocket(
       `${process.env.WEBSOCKET_URL}/chat/${this.$route.params.channel}`
@@ -97,6 +132,40 @@ export default Vue.extend({
             frame.body.content.audio as string
           )
           this.frames.push(frame)
+        }
+      } else if (frame.type === MessageTypes.Offer && 'content' in frame.body) {
+        if (frame.body.userId !== this.userId) {
+          const content = frame.body.content as any
+          console.log('MessageTypes.Offer', frame.body)
+          const prepare = async () => {
+            await this.peerConnection?.setRemoteDescription(
+              new RTCSessionDescription(content as any)
+            )
+            const answer = await this.peerConnection?.createAnswer()
+            await this.peerConnection?.setLocalDescription(
+              new RTCSessionDescription(answer)
+            )
+
+            this.ws!.send(
+              new Message({
+                content: { sdp: answer?.sdp, type: answer?.type },
+                userId: this.userId,
+                type: MessageTypes.Answer,
+              }).toString()
+            )
+          }
+          prepare()
+        }
+      } else if (
+        frame.type === MessageTypes.Answer &&
+        'content' in frame.body
+      ) {
+        if (frame.body.userId !== this.userId) {
+          const content = frame.body.content as any
+          console.log('MessageTypes.Answer', content)
+          // this.peerConnection?.setRemoteDescription(
+          //   new RTCSessionDescription(content)
+          // )
         }
       } else {
         if ('users' in frame.body) {
@@ -117,6 +186,7 @@ export default Vue.extend({
       }
     }
     this.ws.onopen = () => {
+      this.connected = true
       this.ws!.send(
         new Message({
           content: { name: this.name, id: this.userId },
@@ -125,6 +195,10 @@ export default Vue.extend({
         }).toString()
       )
     }
+    navigator.mediaDevices.enumerateDevices().then((result) => {
+      this.devises.audioInput = result.filter((el) => el.kind === 'audioinput')
+      this.devises.videoInput = result.filter((el) => el.kind === 'videoinput')
+    })
   },
 
   beforeDestroy() {

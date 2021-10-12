@@ -51,7 +51,7 @@
               no-resize
               @keydown.ctrl.enter="sendMessage"
             />
-            <div>
+            <div v-if="connected">
               <div v-if="!voice && message">
                 <v-btn :disabled="!message" type="submit" icon large>
                   <v-icon> mdi-send </v-icon>
@@ -67,6 +67,11 @@
                   <v-icon> mdi-microphone </v-icon>
                 </v-btn>
               </v-btn-toggle>
+              <div v-if="!voice">
+                <v-btn icon large @click="callDialog = true">
+                  <v-icon> mdi-phone </v-icon>
+                </v-btn>
+              </div>
             </div>
           </v-layout>
         </v-form>
@@ -82,6 +87,50 @@
       color="deep-purple accent-4"
       >{{ alert.text }}</v-snackbar
     >
+
+    <v-dialog
+      v-model="callDialog"
+      fullscreen
+      hide-overlay
+      transition="dialog-bottom-transition"
+    >
+      <v-card class="channelPage__frame">
+        <v-toolbar dark tile style="flex: 0">
+          <v-toolbar-title>Конференция</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-menu>
+            <template #activator="{ attrs, on }">
+              <v-btn class="white--text ma-5" v-bind="attrs" v-on="on">
+                Камера
+              </v-btn>
+            </template>
+
+            <v-list>
+              <v-list-item
+                v-for="item in devises.videoInput"
+                :key="item.deviceId"
+                link
+                @click="videoInput = item.deviceId"
+              >
+                <v-list-item-title v-text="item.label"></v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+          <v-btn icon dark @click="callDialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <div class="channelPage__wrapper">
+          <div
+            v-for="item in 2"
+            :key="item"
+            class="channelPage__videoContainer"
+          >
+            <video ref="video" class="channelPage__video" />
+          </div>
+        </div>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -110,6 +159,31 @@
     margin-left: 0;
     margin-right: 0;
     margin-bottom: 0;
+  }
+
+  &__frame {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__wrapper {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+  }
+
+  &__videoContainer {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  &__video {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    transform: translateY(-50%);
   }
 }
 </style>

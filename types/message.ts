@@ -4,11 +4,13 @@ export enum MessageTypes {
   Message,
   Join,
   Disconnect,
+  Offer,
+  Answer,
 }
 
 type ContentType = Record<
   string,
-  string | number | Record<string, string | number>[]
+  string | number | Record<string, string | number>[] | undefined
 >
 
 export class Message {
@@ -40,7 +42,7 @@ export class Message {
 
 export default class Frame {
   type: MessageTypes
-  body: Message | { users: User[] }
+  body: Message | { users: User[] } | object
 
   constructor({ type, body }: { type: MessageTypes; body: Message }) {
     this.type = type
